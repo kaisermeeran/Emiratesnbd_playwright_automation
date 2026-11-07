@@ -1,0 +1,16 @@
+{
+  "code": "IWGT",
+  "name": "Inward Guarantee",
+  "menu": "Inward Guarantee",
+  "enabled": false,
+  "process": "",
+  "customer": "88888888",
+  "ccy": "AED",
+  "amountFrom": 100000,
+  "amountTo": 109000,
+  "register": { "WF_VESSEL_CHK_FLG": "No" },
+  "template": "",
+  "fill": {},
+  "defaults": {},
+  "notes": "Not ready: Register One Step has no 'issue' process for IWGT. Put the process name here (as shown in Workflow Initialization > Register One Step) and set enabled to true, or record the flow."
+}

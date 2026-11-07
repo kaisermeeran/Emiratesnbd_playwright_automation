@@ -1,0 +1,16 @@
+{
+  "code": "IPLC",
+  "name": "Import Letter of Credit",
+  "menu": "Import Letter of Credit",
+  "enabled": true,
+  "process": "Issue Letter of Credit One Step",
+  "customer": "88888888",
+  "ccy": "AED",
+  "amountFrom": 100000,
+  "amountTo": 109000,
+  "register": { "WF_VESSEL_CHK_FLG": "No" },
+  "template": "IPLC_ISSUE_KAISER",
+  "fill": {},
+  "defaults": {},
+  "notes": "Tested on DEV 29-Oct-2026: Mastered."
+}

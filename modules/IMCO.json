@@ -1,0 +1,16 @@
+{
+  "code": "IMCO",
+  "name": "Import Collection",
+  "menu": "Import Collection",
+  "enabled": true,
+  "process": "Import Create Collection",
+  "customer": "88888888",
+  "ccy": "AED",
+  "amountFrom": 100000,
+  "amountTo": 109000,
+  "register": { "WF_VESSEL_CHK_FLG": "No" },
+  "template": "IMCO_CREATE",
+  "fill": {},
+  "defaults": { "Email Address": "sanity.check@example.com" },
+  "notes": ""
+}

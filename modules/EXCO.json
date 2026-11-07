@@ -1,0 +1,16 @@
+{
+  "code": "EXCO",
+  "name": "Export Collection",
+  "menu": "Export Collection",
+  "enabled": true,
+  "process": "Create Collection",
+  "customer": "88888888",
+  "ccy": "AED",
+  "amountFrom": 6080,
+  "amountTo": 6080,
+  "register": { "WF_VESSEL_CHK_FLG": "No" },
+  "template": "EXCO TEST",
+  "fill": {},
+  "defaults": {},
+  "notes": "Amount must equal the template EXCO TEST collection amount (6,080), else: Total Mixed Payment Amount must equal the Total Transaction Amount."
+}

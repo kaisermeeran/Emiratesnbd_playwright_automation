@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tests>
+  <test id="IPLC-01" module="IPLC" run="Y">
+    <process>Issue Letter of Credit One Step</process>
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <template>IPLC_ISSUE_KAISER</template>
+  </test>
+  <test id="IPLC-02" module="IPLC" run="N">
+    <process>Issue Letter of Credit One Step</process>
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <amount>250000</amount>
+    <template>IPLC_ISSUE_KAISER</template>
+    <remarks>Example of a second IPLC case with a fixed amount</remarks>
+  </test>
+  <test id="EPLC-01" module="EPLC" run="N">
+    <process>Advise LC One Step</process>
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <remarks>Not ready: 'Advise LC One Step' asks to pick an existing record (incoming LC / MT700) from a catalog. Record this flow with RECORD-NEW-SCRIPT.bat, or fill in process/template here and set enabled to true.</remarks>
+  </test>
+  <test id="IMCO-01" module="IMCO" run="Y">
+    <process>Import Create Collection</process>
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <template>IMCO_CREATE</template>
+    <default label="Email Address">sanity.check@example.com</default>
+  </test>
+  <test id="EXCO-01" module="EXCO" run="Y">
+    <process>Create Collection</process>
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <amount>6080</amount>
+    <template>EXCO TEST</template>
+  </test>
+  <test id="GTEE-01" module="GTEE" run="Y">
+    <process>Create Outward</process>
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <template>Sangeetha</template>
+    <fill name="NARR1">SANITY CHECK</fill>
+  </test>
+  <test id="IWGT-01" module="IWGT" run="N">
+    <customer>88888888</customer>
+    <currency>AED</currency>
+    <remarks>Not ready: Register One Step has no 'issue' process for IWGT. Put the process name here (as shown in Workflow Initialization &gt; Register One Step) and set enabled to true, or record the flow.</remarks>
+  </test>
+</tests>

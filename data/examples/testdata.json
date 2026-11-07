@@ -1,0 +1,99 @@
+{
+  "tests": [
+    {
+      "id": "IPLC-01",
+      "module": "IPLC",
+      "run": "Y",
+      "process": "Issue Letter of Credit One Step",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": "",
+      "template": "IPLC_ISSUE_KAISER",
+      "fill": {},
+      "defaults": {},
+      "remarks": ""
+    },
+    {
+      "id": "IPLC-02",
+      "module": "IPLC",
+      "run": "N",
+      "process": "Issue Letter of Credit One Step",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": 250000,
+      "template": "IPLC_ISSUE_KAISER",
+      "fill": {},
+      "defaults": {},
+      "remarks": "Example of a second IPLC case with a fixed amount"
+    },
+    {
+      "id": "EPLC-01",
+      "module": "EPLC",
+      "run": "N",
+      "process": "Advise LC One Step",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": "",
+      "template": "",
+      "fill": {},
+      "defaults": {},
+      "remarks": "Not ready: 'Advise LC One Step' asks to pick an existing record (incoming LC / MT700) from a catalog. Record this flow with RECORD-NEW-SCRIPT.bat, or fill in process/template here and set enabled to true."
+    },
+    {
+      "id": "IMCO-01",
+      "module": "IMCO",
+      "run": "Y",
+      "process": "Import Create Collection",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": "",
+      "template": "IMCO_CREATE",
+      "fill": {},
+      "defaults": {
+        "Email Address": "sanity.check@example.com"
+      },
+      "remarks": ""
+    },
+    {
+      "id": "EXCO-01",
+      "module": "EXCO",
+      "run": "Y",
+      "process": "Create Collection",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": 6080,
+      "template": "EXCO TEST",
+      "fill": {},
+      "defaults": {},
+      "remarks": ""
+    },
+    {
+      "id": "GTEE-01",
+      "module": "GTEE",
+      "run": "Y",
+      "process": "Create Outward",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": "",
+      "template": "Sangeetha",
+      "fill": {
+        "NARR1": "SANITY CHECK"
+      },
+      "defaults": {},
+      "remarks": ""
+    },
+    {
+      "id": "IWGT-01",
+      "module": "IWGT",
+      "run": "N",
+      "process": "",
+      "customer": "88888888",
+      "currency": "AED",
+      "amount": "",
+      "template": "",
+      "fill": {},
+      "defaults": {},
+      "remarks": "Not ready: Register One Step has no 'issue' process for IWGT. Put the process name here (as shown in Workflow Initialization > Register One Step) and set enabled to true, or record the flow."
+    }
+  ]
+}

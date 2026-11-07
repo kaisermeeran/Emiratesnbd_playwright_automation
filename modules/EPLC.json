@@ -1,0 +1,16 @@
+{
+  "code": "EPLC",
+  "name": "Export Letter of Credit",
+  "menu": "Export Letter of Credit",
+  "enabled": false,
+  "process": "Advise LC One Step",
+  "customer": "88888888",
+  "ccy": "AED",
+  "amountFrom": 100000,
+  "amountTo": 109000,
+  "register": { "WF_VESSEL_CHK_FLG": "No" },
+  "template": "",
+  "fill": {},
+  "defaults": {},
+  "notes": "Not ready: 'Advise LC One Step' asks to pick an existing record (incoming LC / MT700) from a catalog. Record this flow with RECORD-NEW-SCRIPT.bat, or fill in process/template here and set enabled to true."
+}

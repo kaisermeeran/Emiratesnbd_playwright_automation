@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EximBill Sanity Kit - How to run</title>
+<style>
+  :root { --ink:#1d2433; --muted:#5b6475; --line:#d9dee7; --bg:#ffffff; --panel:#f5f7fa; --accent:#0b4f9c; --ok:#1d7a3a; --bad:#b3261e; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 "Segoe UI", Arial, sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:28px; margin:8px 0 4px; } h2 { font-size:21px; margin:36px 0 8px; padding-top:12px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:20px 0 6px; } p.lead { color:var(--muted); margin-top:0; }
+  code, kbd { font-family:Consolas, monospace; font-size:14px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:1px 5px; }
+  pre { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:12px; overflow-x:auto; font-size:14px; }
+  ol.steps > li { margin:10px 0; } .box { background:var(--panel); border-left:4px solid var(--accent); padding:10px 14px; border-radius:4px; margin:12px 0; }
+  .warn { border-left-color:var(--bad); } table { border-collapse:collapse; width:100%; margin:10px 0; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; } th { background:var(--panel); }
+  nav a { color:var(--accent); } nav ol { columns:2; }
+  .ok { color:var(--ok); font-weight:600; } .bad { color:var(--bad); font-weight:600; }
+</style>
+</head>
+<body>
+<main>
+<h1>EximBill Sanity Kit</h1>
+<p class="lead">A <b>Playwright Test</b> framework that runs the daily EximBill sanity check by itself: it creates a transaction for each product, takes it through maker, validator and RFA approval to <b>Mastered</b>, checks Exception, FIRCO, GAPI and Enquiry, and writes the result into an Excel sheet with the same columns as the manual sanity sheet, plus a Playwright HTML test report with every step.</p>
+
+<nav><b>Contents</b>
+<ol>
+<li><a href="#what">What is in the folder</a></li>
+<li><a href="#setup">One-time setup</a></li>
+<li><a href="#run">Run the sanity check</a></li>
+<li><a href="#results">Read the results</a></li>
+<li><a href="#existing">Check a transaction that already exists</a></li>
+<li><a href="#presit">Run it on PRE-SIT (or any other environment)</a></li>
+<li><a href="#data">Test data in Excel, XML or JSON</a></li>
+<li><a href="#modules">Change a product (module) setting</a></li>
+<li><a href="#record">Record your own script</a></li>
+<li><a href="#edit">Change a script</a></li>
+<li><a href="#errors">If something goes wrong</a></li>
+<li><a href="#dev">For developers</a></li>
+</ol></nav>
+
+<h2 id="what">1. What is in the folder</h2>
+<p>Nothing needs to be installed. Everything the scripts need is inside this folder, and they use the Microsoft Edge browser that is already on every Windows PC.</p>
+<table>
+<tr><th>File / folder</th><th>What it is for</th></tr>
+<tr><td><code>0-SETUP-CHECK.bat</code></td><td>Checks that this PC can run the kit. Run it first.</td></tr>
+<tr><td><code>RUN-IPLC.bat</code>, <code>RUN-EPLC.bat</code>, <code>RUN-IMCO.bat</code>, <code>RUN-EXCO.bat</code>, <code>RUN-GTEE.bat</code>, <code>RUN-IWGT.bat</code></td><td>One script per product: Import LC, Export LC, Import Collection, Export Collection, Outward Guarantee, Inward Guarantee.</td></tr>
+<tr><td><code>RUN-ALL.bat</code></td><td>Runs every product that is switched on, in one go.</td></tr>
+<tr><td><code>RUN-TEST-ID.bat</code></td><td>Runs one row of the test data sheet, by its Test ID.</td></tr>
+<tr><td><code>EDIT-SETTINGS.bat</code>, <code>EDIT-TEST-DATA.bat</code></td><td>Open settings.json in Notepad / the test data sheet in Excel.</td></tr>
+<tr><td><code>data\testdata.xlsx</code></td><td>Test data: one row per transaction to create (customer, amount, template...).</td></tr>
+<tr><td><code>RUN-EXISTING-REF.bat</code></td><td>Checks (or finishes) a transaction you already created.</td></tr>
+<tr><td><code>RECORD-NEW-SCRIPT.bat</code></td><td>Records what you click in EximBill and saves it as a script.</td></tr>
+<tr><td><code>RUN-RECORDED-SCRIPT.bat</code></td><td>Plays back a recorded script.</td></tr>
+<tr><td><code>SHOW-HTML-REPORT.bat</code></td><td>Opens the Playwright HTML test report of the last run (passed / failed tests, steps, screenshots).</td></tr>
+<tr><td><code>OPEN-RESULTS-FOLDER.bat</code></td><td>Opens the folder with the Excel results, logs and screenshots.</td></tr>
+<tr><td><code>settings.json</code></td><td>Which EximBill, which users, which database.</td></tr>
+<tr><td><code>modules\</code></td><td>One settings file per product (process name, customer, template).</td></tr>
+<tr><td><code>tests\sanity.spec.js</code></td><td>The sanity test (phases + one test per transaction).</td></tr>
+<tr><td><code>tests\recorded\</code></td><td>Your recorded tests (one <code>.spec.js</code> file each).</td></tr>
+<tr><td><code>hooks\</code></td><td>Your extra steps in the middle of a product flow (see section 10, "hooks").</td></tr>
+<tr><td><code>playwright.config.js</code></td><td>Test-runner settings (Edge, timeouts, reports).</td></tr>
+<tr><td><code>results\</code></td><td>Excel results, HTML report (<code>results\html-report</code>), run logs and error screenshots.</td></tr>
+<tr><td><code>framework\</code>, <code>node\</code>, <code>node_modules\</code></td><td>The engine (Playwright, Node.js). Do not change unless you are a developer.</td></tr>
+</table>
+
+<h2 id="setup">2. One-time setup</h2>
+<ol class="steps">
+<li><b>Copy the whole folder</b> to the PC, for example to <code>C:\EximBillSanity</code>. Keep all files together. A short path without spaces is safest.</li>
+<li><b>Open <code>settings.json</code> with Notepad</b> (right-click &gt; Open with &gt; Notepad) and change these lines for your environment. Keep the quotes and commas exactly as they are.
+<pre>"environment": "PRE-SIT",                         &lt;- name printed in the results
+"url": "http://&lt;server&gt;:8080/EximBillWeb/",       &lt;- the EximBill login page
+"businessUnit": "ENBD",
+
+"users": {
+  "maker": "ANBU_MK",                              &lt;- registers and does the maker steps
+  "checkers": ["ANBU_VAL", "ANBU_AUTH"],          &lt;- authorize in this order, one approval each
+  "rfa": "RFARFIINTERVENE"                         &lt;- approves RFA / RFI (Intervene)
+},
+"rfaFallbackToMaker": true,                        &lt;- if the RFA user cannot log in, use the maker
+"samePasswordForAllUsers": true,                   &lt;- ask one password for all three users
+
+"database": {
+  "enabled": true,
+  "user": "EXIMWFBK",                              &lt;- a read-only database user
+  "connectString": "10.2.3.21:1522/DENBDPDB",      &lt;- host:port/service of the EximBill database
+  ...</pre>
+  <div class="box">Passwords are <b>never</b> written in any file. The scripts ask for them on screen each time (typing shows <code>*</code>).</div>
+</li>
+<li><b>Double-click <code>0-SETUP-CHECK.bat</code></b>. Type the EximBill password and the database password when asked. You should see:
+<pre>  [OK]   Node.js v22...
+  [OK]   Microsoft Edge starts
+  [OK]   EximBill login works for ANBU_MK
+  [OK]   Database EXIMWFBK@...
+All good. You can run the sanity scripts.</pre>
+If a line says <span class="bad">[FAIL]</span>, see <a href="#errors">If something goes wrong</a>.</li>
+</ol>
+
+<h2 id="run">3. Run the sanity check</h2>
+<ol class="steps">
+<li><b>Clear the cache</b> on the server first, as you do for the manual sanity (the sheet records "CACHE CLEAR = YES").</li>
+<li><b>Double-click the script for the product</b>, for example <code>RUN-IPLC.bat</code>, or <code>RUN-ALL.bat</code> for everything.</li>
+<li><b>Type the passwords</b> when the black window asks for them, and press Enter.</li>
+<li><b>Leave the PC alone.</b> An Edge window opens and works by itself. Do not click in it or close it. It logs in several times, one user after the other:
+  <ul>
+  <li><b>Maker</b> (e.g. ANBU_MK): Workflow Initialization &gt; Register One Step, claims the task from Group Queue, loads the template, ticks the TBML box, does the Finacle limit check, answers any RFI, confirms the maker decision.</li>
+  <li><b>RFA / RFI Intervene</b> (e.g. RFARFIINTERVENE): approves the compliance RFA (Decision &gt; Approve).</li>
+  <li><b>Checkers</b>, in the order of <code>checkers</code> in settings.json: ANBU_VAL claims the Checker task and releases it; when EximBill says <i>"partially authorized and requires further authorization"</i>, ANBU_AUTH logs in and gives the next approval. Add or remove names in the list if your authorization matrix needs more or fewer levels.</li>
+  </ul>
+  Then it waits for Auto Refresh / Auto Release to master the transaction and runs the enquiry checks.</li>
+<li><b>Wait for the summary</b> at the end of the black window: <code>RESULT: ALL PASSED</code> or <code>RESULT: SOME CHECKS FAILED</code>, with the path of the Excel report. The test runner prints each test as it finishes (ok = passed, x = failed). One product takes about 10 to 20 minutes; most of it is EximBill and the auto release.</li>
+<li>Press any key to close the black window.</li>
+</ol>
+
+<h2 id="results">4. Read the results</h2>
+<h3>The HTML test report</h3>
+<p>Double-click <code>SHOW-HTML-REPORT.bat</code>. Your browser opens the Playwright report (close the black window when you are done). It lists the tests of the last run:</p>
+<ul>
+<li><b>1. Maker</b>, <b>2. RFA</b>, <b>3. Checker</b>, <b>4. Wait for Mastered</b>, <b>5. Checks</b>: one test per phase. If a phase fails, the next ones are skipped.</li>
+<li><b>IPLC-01 (IPLC) sanity result</b> and so on: one test per transaction. It is red when a sanity column is Not OK; click it to see which check failed and why, with screenshots. The Excel file and the log are attached to test 5.</li>
+</ul>
+<h3>The Excel report and other files</h3>
+<p>Double-click <code>OPEN-RESULTS-FOLDER.bat</code>. You will find:</p>
+<table>
+<tr><th>File</th><th>What it is</th></tr>
+<tr><td><code>sanity-&lt;env&gt;-&lt;date-time&gt;.xlsx</code></td><td>The result sheet. One row per product.</td></tr>
+<tr><td><code>run-&lt;env&gt;-&lt;date-time&gt;.log</code></td><td>Everything the script did, line by line, with the time. Open with Notepad.</td></tr>
+<tr><td><code>error-...png</code>, <code>enquiry-tab-...png</code></td><td>Screenshot of the screen at the moment a step failed.</td></tr>
+</table>
+<h3>Columns in the Excel sheet</h3>
+<table>
+<tr><th>Column</th><th>How it is checked</th><th>Good value</th></tr>
+<tr><td>TXN NO, AMT, TIME</td><td>The reference and amount the script registered.</td><td>a reference</td></tr>
+<tr><td>Exception</td><td>Any entry for the transaction in the Exception queue.</td><td class="ok">NO</td></tr>
+<tr><td>COMPLIANCE FIRCO</td><td>A FIRCO screening call was made (GAPI EEFIRCOGapi).</td><td class="ok">YES</td></tr>
+<tr><td>GAPI TRIGGER</td><td>At least one GAPI call was made for the transaction.</td><td class="ok">YES</td></tr>
+<tr><td>ENQUIRY</td><td>Inbox &gt; Enquiry tab finds it and "View Transaction" lists its events.</td><td class="ok">WORKING</td></tr>
+<tr><td>ALL TABS ENQ</td><td>Every tab of the transaction opens without an error.</td><td class="ok">OK (n tabs)</td></tr>
+<tr><td>EVENT WISE</td><td>Every event opens from View Transaction.</td><td class="ok">OK (n events)</td></tr>
+<tr><td>EVENT STATUS</td><td>Status in the product's master table.</td><td class="ok">MASTERED</td></tr>
+<tr><td>RISQ, SIZE EXPA</td><td>Not automated yet; fill in by hand.</td><td>N/A</td></tr>
+<tr><td>OK/NOT OK</td><td>Green when nothing failed, red otherwise.</td><td class="ok">OK</td></tr>
+<tr><td>Notes</td><td>Why a column failed, in words.</td><td>empty</td></tr>
+</table>
+
+<h2 id="existing">5. Check a transaction that already exists</h2>
+<p>Double-click <code>RUN-EXISTING-REF.bat</code>, type the product code (e.g. <code>IPLC</code>) and the reference (e.g. <code>ENBDLC26007798</code>). If the transaction is still waiting in the workflow, the script finishes the open tasks first; then it runs all the checks and writes the Excel sheet.</p>
+
+<h2 id="presit">6. Run it on PRE-SIT (or any other environment)</h2>
+<p>Everything that is different per environment is in <b>one file</b>, <code>settings.json</code>. Double-click <code>EDIT-SETTINGS.bat</code> to open it in Notepad.</p>
+<ol class="steps">
+<li><b>Make a copy of the folder</b> per environment if you want to keep DEV and PRE-SIT side by side, e.g. <code>C:\EximBillSanity-PRESIT</code>.</li>
+<li>Change these lines (keep the quotes and commas):
+<pre>"environment": "PRE-SIT",
+"url": "http://&lt;pre-sit server or IP&gt;:&lt;port&gt;/EximBillWeb/",
+"businessUnit": "ENBD",
+"users": {
+  "maker": "&lt;PRE-SIT maker user&gt;",
+  "checkers": ["&lt;first checker&gt;", "&lt;second checker&gt;"],
+  "rfa": "&lt;RFA/RFI intervene user&gt;"
+},
+"database": {
+  "enabled": true,
+  "user": "&lt;read-only PRE-SIT database user&gt;",
+  "connectString": "&lt;db IP&gt;:&lt;port&gt;/&lt;service name&gt;",
+  "workflowSchema": "EXIMWF", "systemSchema": "EXIMSYS", "transactionSchema": "EXIMTRX"
+},</pre>
+  Use the same URL you type in Edge to open EximBill, ending with <code>/EximBillWeb/</code>. For the database, use the IP address rather than the host name.</li>
+<li>Save (<kbd>Ctrl</kbd>+<kbd>S</kbd>) and close Notepad.</li>
+<li><b>Check the test data for PRE-SIT</b> (next section): customer IDs and template names must exist in PRE-SIT. Open each product screen once by hand, click toolbar <b>Load</b>, and note a template name that exists there.</li>
+<li>Run <code>0-SETUP-CHECK.bat</code>. All lines must be <span class="ok">[OK]</span>.</li>
+<li>Run <code>RUN-IPLC.bat</code> first. When it works, run the other products or <code>RUN-ALL.bat</code>.</li>
+</ol>
+<div class="box"><b>Tip:</b> <code>"showBrowser": false</code> in settings.json runs the browser hidden (faster, but you cannot watch it). Keep it <code>true</code> until everything works.</div>
+
+<h2 id="data">7. Test data in Excel, XML or JSON</h2>
+<p>The values used to create transactions come from <code>data\testdata.xlsx</code> (double-click <code>EDIT-TEST-DATA.bat</code>). <b>One row = one transaction.</b> Add rows to test more cases, for example two IPLCs with different customers or amounts.</p>
+<table>
+<tr><th>Column</th><th>What to put</th></tr>
+<tr><td>Test ID</td><td>Any unique name, e.g. <code>IPLC-01</code>. Run one row with <code>RUN-TEST-ID.bat</code>. It is copied to the result sheet.</td></tr>
+<tr><td>Module</td><td>IPLC, EPLC, IMCO, EXCO, GTEE or IWGT.</td></tr>
+<tr><td>Run (Y/N)</td><td><b>Y</b> = included in <code>RUN-ALL.bat</code> and <code>RUN-&lt;module&gt;.bat</code>. <b>N</b> = skipped.</td></tr>
+<tr><td>Process</td><td>Process Name exactly as in Register One Step.</td></tr>
+<tr><td>Customer, Currency</td><td>Customer ID / CIF and currency for the registration.</td></tr>
+<tr><td>Amount</td><td>A fixed amount, or empty for a random amount (avoids the "Duplicate Data" check). Some templates carry a fixed payment split; then the amount must match the template (EXCO TEST = 6080).</td></tr>
+<tr><td>Template</td><td>Template from the toolbar <b>Load</b> list.</td></tr>
+<tr><td>Fill</td><td>Extra fields by field name: <code>NARR1=SANITY CHECK; REMARKS=test</code></td></tr>
+<tr><td>Defaults</td><td>Values for "&lt;Label&gt; can't be empty" messages: <code>Email Address=a@b.com</code></td></tr>
+<tr><td>Remarks</td><td>Free text, copied to the result sheet.</td></tr>
+</table>
+<p>Empty cells take the value from <code>modules\&lt;module&gt;.json</code>. The second sheet "How to fill" in the Excel file repeats this table.</p>
+<h3>Using XML or JSON instead of Excel</h3>
+<p>Ready examples are in <code>data\examples\testdata.xml</code> and <code>data\examples\testdata.json</code> (same rows as the Excel file). Point settings.json at the file you want:</p>
+<pre>"testData": "data/testdata.xlsx",                 &lt;- Excel (default)
+"testData": "data/examples/testdata.xml",         &lt;- XML
+"testData": "data/examples/testdata.json",        &lt;- JSON
+"testData": "",                                   &lt;- no data file: one case per enabled module file</pre>
+<p>XML format:</p>
+<pre>&lt;tests&gt;
+  &lt;test id="GTEE-01" module="GTEE" run="Y"&gt;
+    &lt;process&gt;Create Outward&lt;/process&gt;
+    &lt;customer&gt;88888888&lt;/customer&gt;
+    &lt;template&gt;Sangeetha&lt;/template&gt;
+    &lt;fill name="NARR1"&gt;SANITY CHECK&lt;/fill&gt;
+    &lt;default label="Email Address"&gt;a@b.com&lt;/default&gt;
+  &lt;/test&gt;
+&lt;/tests&gt;</pre>
+<p>To rebuild the Excel and example files from the module files: <code>node\node.exe framework\make-testdata.js</code> (this overwrites <code>data\testdata.xlsx</code>).</p>
+<h2 id="modules">8. Change a product (module) setting</h2>
+<p>Each product has a file in <code>modules\</code>, for example <code>modules\IPLC.json</code>. Open it with Notepad:</p>
+<pre>{
+  "code": "IPLC",                               &lt;- product code (do not change)
+  "name": "Import Letter of Credit",
+  "menu": "Import Letter of Credit",            &lt;- name of the product in the left menu
+  "enabled": true,                              &lt;- false = RUN-ALL skips it
+  "process": "Issue Letter of Credit One Step", &lt;- Process Name in Register One Step
+  "customer": "88888888",                       &lt;- Customer ID/CIF used to register
+  "ccy": "AED",
+  "amountFrom": 100000, "amountTo": 109000,     &lt;- a random amount in this range
+  "register": { "WF_VESSEL_CHK_FLG": "No" },    &lt;- drop-downs on Register One Step (field name: shown text)
+  "template": "IPLC_ISSUE_KAISER",              &lt;- template picked with toolbar Load
+  "fill": {},                                   &lt;- extra fields: { "FIELD_NAME": "value" }
+  "defaults": {},                               &lt;- values for "X can't be empty": { "Email Address": "a@b.com" }
+  "notes": ""
+}</pre>
+<ul>
+<li><b>Different customer or template?</b> Change <code>customer</code> or <code>template</code>. The template must exist in the toolbar <b>Load</b> list of that screen.</li>
+<li><b>"... can't be empty"</b>: the script fills these automatically with a test value. To choose the value, add it under <code>defaults</code> using the exact label from the message.</li>
+<li><b>TBML tasks</b>: Vessel check flag = <b>Yes</b> on Register One Step creates a <b>TBML Maker</b> task, and the TBML flag on the transaction (e.g. Create Collection) creates a <b>TBML RFA</b>. The kit registers with <code>"WF_VESSEL_CHK_FLG": "No"</code> (in <code>"register"</code>); change it to <code>"Yes"</code> to test the TBML flow. Empty drop-downs on Register One Step that are not listed in <code>"register"</code> get their first value.</li>
+<li><b>RFI "Limit expired"</b>: the customer's limit has expired, so EximBill raises an RFI. The script answers it, but a customer with a valid limit avoids it.</li>
+<li><b>Add a new product</b>: copy an existing file, give it a new name and <code>code</code> (the module code shown in Register One Step), and make a copy of a <code>RUN-xxxx.bat</code> with the new code.</li>
+</ul>
+<div class="box warn"><b>EPLC and IWGT are switched off</b> (<code>"enabled": false</code>). On DEV, "Advise LC One Step" needs an incoming LC (MT700) to pick from a catalog, and IWGT has no issue process in Register One Step. Put the right process and template in their files and set <code>enabled</code> to <code>true</code>, or record those flows (next section).</div>
+
+<h2 id="record">9. Record your own script</h2>
+<p>Playwright can watch what you do in the browser and write the script for you.</p>
+<ol class="steps">
+<li>Double-click <code>RECORD-NEW-SCRIPT.bat</code>.</li>
+<li>Type a name without spaces, for example <code>EPLC_advise</code>, and press Enter.</li>
+<li>Two windows open: <b>Edge</b> on the EximBill login page, and the <b>Playwright Inspector</b>, which shows the script being written as you click.</li>
+<li>Log in and do the steps in Edge, slowly, the way you normally would. Every click and every typed value is recorded.</li>
+<li>To add a check, click the <b>eye / "Assert visibility" or "Assert text"</b> button in the Inspector toolbar, then click the text on the page that must be there (for example "Transaction Completed").</li>
+<li><b>Close the Edge window</b> when you are done. The test is saved as <code>tests\recorded\EPLC_advise.spec.js</code>. The password you typed is removed from the file automatically; it is asked again when you replay.</li>
+<li>To replay: double-click <code>RUN-RECORDED-SCRIPT.bat</code>, type the name (<code>EPLC_advise</code>), type the password. The window ends with <span class="ok">PASSED</span> or <span class="bad">FAILED</span>; <code>SHOW-HTML-REPORT.bat</code> shows the steps, and for a failure a screenshot and a <b>trace</b> (click it to replay the test action by action).</li>
+</ol>
+<div class="box"><b>Tips for good recordings</b><br>
+- Start from the login page every time, so the script works on its own.<br>
+- Wait for each screen to finish loading before you click the next thing.<br>
+- A recording replays exactly the same values. If EximBill refuses duplicates (same customer, currency and amount), change the amount in the file before replaying, or use the product scripts (section 3), which pick a new amount every run.<br>
+- <code>tests\recorded\EXAMPLE_login_and_enquiry.spec.js</code> is a small example you can open with Notepad.</div>
+
+<h2 id="edit">10. Change a script</h2>
+<p>Scripts are plain text files. Open them with Notepad, or better with <b>Visual Studio Code</b> (free) if it is allowed on the PC: right-click the file &gt; Open with.</p>
+<h3>Change a recorded script</h3>
+<p>A recorded test (<code>tests\recorded\&lt;name&gt;.spec.js</code>) is a list of steps inside <code>test('...', async ({ page }) =&gt; { ... });</code>, one per line. The common lines:</p>
+<table>
+<tr><th>Line in the script</th><th>What it does</th></tr>
+<tr><td><code>await page.goto('http://.../EximBillWeb/');</code></td><td>Opens a URL. Change it for PRE-SIT, or use <code>settings.url</code> (below) so it follows settings.json.</td></tr>
+<tr><td><code>await page.locator('input[name="WF_AMT"]').fill('123456');</code></td><td>Types a value into a field. Change the text between the quotes.</td></tr>
+<tr><td><code>await ....getByText('CONFIRM').click();</code></td><td>Clicks something.</td></tr>
+<tr><td><code>await ....selectOption('IPLC');</code></td><td>Chooses a value in a drop-down list.</td></tr>
+<tr><td><code>await expect(...).toContainText('Transaction Completed');</code></td><td>A check: the script fails if the text is not there.</td></tr>
+<tr><td><code>await page.waitForTimeout(5000);</code></td><td>Waits 5 seconds. Add one after a slow screen if the next step fails.</td></tr>
+<tr><td><code>page.locator('iframe[name="work"]').contentFrame()</code> / <code>frameLocator(...)</code></td><td>The step happens inside an EximBill frame (work, eeinbox, eeToolbar). Keep these as recorded.</td></tr>
+</table>
+<p><b>Delete a wrong step</b>: delete its line. <b>Add a step</b>: easiest is to record the missing part as a new short script and copy its lines in.</p>
+<p><b>Use the Excel test data in your own script</b> (so you change values in Excel, not in the script). Add near the top:</p>
+<pre>const { row, settings } = require('../../framework/data');
+...
+const r = await row('IPLC-01');                        // the row with this Test ID
+await page.goto(settings.url);                         // URL from settings.json
+await work.locator('input[name="WF_CUST_ID"]').fill(r.customer);
+await work.locator('input[name="WF_AMT"]').fill(String(r.amountFrom));</pre>
+<h3>Find the name of a field or button</h3>
+<ol class="steps">
+<li>Run <code>RECORD-NEW-SCRIPT.bat</code> (any name).</li>
+<li>In the Playwright Inspector click <b>Pick locator</b> (the target icon) and click the field on the page. The Inspector shows how to reach it, e.g. <code>locator('input[name="WF_CUST_ID"]')</code>. Copy that into your script.</li>
+</ol>
+<h3 id="hooks">Add or change a step in the middle of the flow (hooks)</h3>
+<p>The standard flow is: <b>Register One Step</b> &rarr; <b>maker task</b> (template, Fill, CONFIRM) &rarr; <b>RFI / RFA</b> &rarr; <b>checkers</b> &rarr; <b>checks</b>.
+When you need something extra <i>in between</i> (change a field on another tab, pick a different drop-down value, click a button, take a screenshot),
+you do not change the framework: you write a small <b>hooks</b> file for that product.</p>
+<ol class="steps">
+<li>Open the folder <code>hooks</code>. Copy <code>_EXAMPLE.js</code> and rename the copy to the module code: <code>IPLC.js</code> (or <code>GTEE.js</code>, <code>IMCO.js</code> ...). Use <code>ALL.js</code> for steps that apply to every product.</li>
+<li>Open it with Notepad. Keep only the hook(s) you need and delete the others:
+<table>
+<tr><th>Hook</th><th>When it runs</th></tr>
+<tr><td><code>beforeRegisterConfirm</code></td><td>Register One Step is filled in, before its CONFIRM.</td></tr>
+<tr><td><code>afterRegister</code></td><td>Right after Register One Step (the new reference is in <code>c.ref</code>).</td></tr>
+<tr><td><code>beforeTask</code></td><td>A workflow task has just been opened (maker, RFI, RFA, checker), before anything is done on it.</td></tr>
+<tr><td><code>beforeConfirm</code></td><td>The task screen is ready (template and Fill values already in), before CONFIRM. <b>This is the one you need most.</b></td></tr>
+<tr><td><code>afterTask</code></td><td>After the task was confirmed.</td></tr>
+<tr><td><code>afterChecks</code></td><td>After the sanity checks of the transaction.</td></tr>
+</table></li>
+<li>Write the steps inside the hook. They are the same lines the recorder produces. On a transaction screen use <code>work</code> (the form), on the toolbar use <code>toolbar</code>:
+<pre>async beforeConfirm({ page, work, task, c }) {
+  if (task.name !== 'Issue Letter of Credit One Step') return;      // only on the maker screen
+  await work.getByText('Shipment', { exact: true }).first().click(); // open a tab
+  await work.locator('input[name="PORT_OF_LOAD"]').fill('JEBEL ALI'); // type in a field
+  await work.locator('select[name="PARTIAL_SHIP"]').selectOption({ label: 'ALLOWED' }); // drop-down
+},</pre></li>
+<li><b>Get the lines from a recording</b>: run <code>RECORD-NEW-SCRIPT.bat</code>, do only the extra clicks on the screen, close the browser, open the recorded file and copy those lines into the hook. Replace <code>page.locator('iframe[name="work"]').contentFrame()</code> (or <code>page.frameLocator('iframe[name="work"]')</code>) at the start of a line with <code>work</code>.</li>
+<li>Save and run the product as usual. The log shows <code>hook IPLC.beforeConfirm (task name)</code> each time a hook runs. If a hook fails, that step is reported as failed with a screenshot.</li>
+</ol>
+<p>Values from the test data are in <code>c</code>: <code>c.id</code>, <code>c.customer</code>, <code>c.amount</code>, <code>c.ref</code>, <code>c.fill</code>, <code>c.remarks</code>. To control a hook from Excel, put a value in the <b>Fill</b> or <b>Remarks</b> column and read it in the hook, e.g. <code>if (c.remarks.includes('NO-SHIPMENT')) return;</code></p>
+<div class="box"><b>Which way to change something?</b><br>
+Different value in a field that the template already has &rarr; <b>Fill</b> column (Excel) or <code>fill</code> (module file).<br>
+A "... can't be empty" message &rarr; <b>Defaults</b> column.<br>
+Different customer, amount, template, process &rarr; the Excel row.<br>
+Extra clicks, another tab, a button, a check in the middle &rarr; a <b>hooks</b> file.<br>
+A completely different flow &rarr; record it as its own test (section 9).</div>
+
+<h3>Change how a product is created (no programming)</h3>
+<p>Most changes do not need code: change the <b>process</b>, <b>customer</b>, <b>template</b>, <b>Fill</b> or <b>Defaults</b> in <code>data\testdata.xlsx</code> or <code>modules\&lt;module&gt;.json</code>.</p>
+<h3>Debug a run step by step</h3>
+<p>Open a Command Prompt in the kit folder (type <code>cmd</code> in the Explorer address bar) and run:</p>
+<pre>set PWDEBUG=1
+node\node.exe framework\run.js IPLC-01</pre>
+<p>The Playwright Inspector opens and stops before every action; press <b>Step over</b> to go one action at a time and see where it goes wrong. For a recorded test: <code>node\node.exe node_modules\@playwright\test\cli.js test tests\recorded\&lt;name&gt;.spec.js --debug</code>.</p>
+<h2 id="errors">11. If something goes wrong</h2>
+<p>First look at the last lines of the black window or of the <code>run-...log</code> file, and at any <code>error-...png</code> screenshot in <code>results\</code>.</p>
+<table>
+<tr><th>Message</th><th>What it means / what to do</th></tr>
+<tr><td><code>[FAIL] Microsoft Edge does not start</code></td><td>Edge is missing or blocked on this PC. Install / allow Microsoft Edge.</td></tr>
+<tr><td><code>EximBill not reachable</code>, <code>ERR_CONNECTION</code>, timeout on login</td><td>Wrong <code>url</code> in settings.json, VPN / network, or EximBill is down. Open the URL in Edge by hand to check.</td></tr>
+<tr><td><code>[W208] Invalid login credentials</code> / <code>login failed for ...</code></td><td>Wrong user or password, or the user is locked. Check <code>users</code> in settings.json. For the RFA user, <code>rfaFallbackToMaker: true</code> uses the maker instead.</td></tr>
+<tr><td><code>Database: ORA-01017</code></td><td>Wrong database user or password.</td></tr>
+<tr><td><code>Database: ... NJS-503 / connection refused</code></td><td>Wrong <code>connectString</code> or no network to the database. Use the IP address, not the host name.</td></tr>
+<tr><td><code>ORA-00942 table or view does not exist</code></td><td>The database user cannot read the EximBill tables, or the schema names under <code>database</code> in settings.json differ in this environment.</td></tr>
+<tr><td><code>registration failed: ... did not find some options</code></td><td>The <code>process</code> name in the module file is not in the Process Name list. Copy it exactly from Register One Step.</td></tr>
+<tr><td><code>template ... not found</code></td><td>The <code>template</code> name is not in the toolbar Load list. Pick an existing one.</td></tr>
+<tr><td><code>screen errors: [W4206] ... can't be empty</code> (keeps repeating)</td><td>A mandatory field the template does not fill. Add it under <code>defaults</code> (by label) or <code>fill</code> (by field name).</td></tr>
+<tr><td><code>task "..." for ... not in inbox</code></td><td>The task is assigned to another user or group. Check that the users in settings.json have the right groups.</td></tr>
+<tr><td><code>Transaction Locked</code></td><td>Handled automatically: the script unlocks it through &lt;Product&gt; &gt; Unlock Transaction. If it still fails, unlock by hand.</td></tr>
+<tr><td><code>authorization screen shows "no record"</code></td><td>The validator cannot see the transaction for authorization (often user rights). Do the step by hand once to confirm.</td></tr>
+<tr><td>ENQUIRY: <code>View Transaction: [W215] No valid transaction records available!</code></td><td>The enquiry itself fails for that transaction. This is an EximBill finding; report it.</td></tr>
+<tr><td>EVENT STATUS: <code>status P</code></td><td>Not mastered within <code>waitForMasteredMinutes</code>. Look at the open tasks at the end of the log line, or raise the wait time in settings.json.</td></tr>
+<tr><td>A step takes too long / timeout</td><td>EximBill is slow. Raise <code>timeoutSeconds</code> in settings.json (e.g. 120).</td></tr>
+</table>
+<div class="box">Stopping a run in the middle (closing the window) can leave a transaction locked or half way. Start <code>RUN-EXISTING-REF.bat</code> with its reference to finish it.</div>
+
+<h2 id="dev">12. For developers</h2>
+<table>
+<tr><th>File</th><th>Role</th></tr>
+<tr><td><code>playwright.config.js</code>, <code>tests\sanity.spec.js</code></td><td>Playwright Test setup and the sanity test: serial phases (maker, RFA, checkers, wait, checks) and one test per transaction with soft assertions per sanity column.</td></tr>
+<tr><td><code>framework\test-launch.js</code></td><td>What the RUN-xxxx.bat files call: picks test cases, asks passwords, runs the test file, prints the summary.</td></tr>
+<tr><td><code>framework\sanity.js</code></td><td>The engine: <code>selectCases</code>, <code>phases.maker / rfa / checker / extraPasses / waitMastered / checks</code>, <code>runSanity</code>.</td></tr>
+<tr><td><code>framework\run.js</code></td><td>Same run without the test runner, printing every step: <code>node\node.exe framework\run.js IPLC GTEE</code> or <code>IPLC=ENBDLC...</code>.</td></tr>
+<tr><td><code>framework\wf.js</code></td><td>EximBill workflow steps: Register One Step, open/claim inbox tasks, template Load, CONFIRM with TBML tick, limit check, duplicate popup, RFI/RFA answers, unlock.</td></tr>
+<tr><td><code>framework\enquiry.js</code></td><td>Enquiry / all tabs / event-wise checks.</td></tr>
+<tr><td><code>framework\report.js</code></td><td>Checks per transaction and the Excel layout.</td></tr>
+<tr><td><code>framework\db.js</code></td><td>Read-only Oracle queries (node-oracledb thin mode, no Oracle client needed).</td></tr>
+<tr><td><code>framework\login.js</code>, <code>credentials.js</code>, <code>config.js</code></td><td>Edge start and login, password prompts, settings loading.</td></tr>
+<tr><td><code>framework\recording.js</code></td><td>Cleans and replays recorded scripts.</td></tr>
+<tr><td><code>framework\hooks.js</code></td><td>Loads <code>hooks\ALL.js</code> and <code>hooks\&lt;MODULE&gt;.js</code> and runs them at beforeRegisterConfirm / afterRegister / beforeTask / beforeConfirm / afterTask / afterChecks.</td></tr>
+<tr><td><code>framework\testdata.js</code>, <code>data.js</code>, <code>make-testdata.js</code></td><td>Reads test cases from Excel / XML / JSON; <code>data.js</code> gives one row to your own scripts; <code>make-testdata.js</code> rebuilds the data files.</td></tr>
+</table>
+<h3>Useful facts about the EximBill screens</h3>
+<ul>
+<li>The page is made of frames: the left menu is in <code>screen/index.htm</code>, the inbox in frame <code>eeinbox</code>, the transaction form in <code>work</code>, the toolbar (CONFIRM, Load...) in <code>eeToolbar</code>, popups in <code>*confirmDialogFrame</code>. Use <code>page.frameLocator('iframe[name="work"]')</code> in your own scripts.</li>
+<li>The fastest way to open any function is the menu Search box: type the function name and click "Module&gt;Function".</li>
+<li>The RFI / RFA decision popup is in the top page: comment box <code>#decisionCommentText</code>, buttons <code>#decisionBtnApprove</code> / "Submit Decision".</li>
+<li>To step through a script slowly with the Playwright Inspector, run it from a command prompt in this folder: <code>set PWDEBUG=1</code> then <code>node\node.exe framework\run.js IPLC</code>.</li>
+<li>To record into the window yourself: <code>node\node.exe node_modules\playwright\cli.js codegen --channel=msedge --target=playwright-test &lt;url&gt;</code>.</li>
+<li>To run all recorded tests: <code>node\node.exe node_modules\@playwright\test\cli.js test tests\recorded</code> (set <code>EXIM_PASS</code> first). The sanity test is started through the launcher (RUN-xxxx.bat), which picks the cases and asks the passwords.</li>
+<li>Write a new test by hand: copy <code>tests\recorded\EXAMPLE_login_and_enquiry.spec.js</code>, and use <code>require('../../framework/wf')</code> for the EximBill steps (register, openTask, loadTemplate, makerConfirm, answerReferrals) and <code>require('../../framework/db')</code> for database checks.</li>
+</ul>
+</main>
+</body>
+</html>
